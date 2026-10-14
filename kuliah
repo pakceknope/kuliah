@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jadwal Belajar LIPIA & UIM</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        ios: {
+                            bgLight: '#f2f2f7',
+                            bgDark: '#0b0f19',
+                            cardLight: 'rgba(255, 255, 255, 0.82)',
+                            cardDark: 'rgba(22, 28, 42, 0.75)',
+                            itemDark: 'rgba(255, 255, 255, 0.06)',
+                            itemDarkBorder: 'rgba(255, 255, 255, 0.08)',
+                        },
+                        lipia: {
+                            sky: '#38bdf8',
+                            skyLight: '#7dd3fc',
+                            skyDark: '#0284c7',
+                            gold: '#d4af37',
+                        },
+                        uim: {
+                            teal: '#007cb0',
+                            tealLight: '#22d3ee',
+                            gold: '#c69214',
+                        }
+                    },
+                    fontFamily: {
+                        sans: [
+                            '-apple-system',
+                            'BlinkMacSystemFont',
+                            '"SF Pro Display"',
+                            '"SF Pro Text"',
+                            '"SF Pro"',
+                            '"Helvetica Neue"',
+                            'Helvetica',
+                            'Arial',
+                            'sans-serif'
+                        ],
+                    },
+                    keyframes: {
+                        wave: {
+                            '0%, 100%': { transform: 'rotate(0deg)' },
+                            '20%, 60%': { transform: 'rotate(16deg)' },
+                            '40%, 80%': { transform: 'rotate(-14deg)' },
+                        }
+                    },
+                    animation: {
+                        waving: 'wave 1.6s infinite ease-in-out',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Pure Apple System Typography & Smooth Render */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "SF Pro", "Helvetica Neue", Helvetica, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            transition: background-color 0.4s ease, color 0.4s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Glassmorphism Styles */
+        .ios-glass {
+            background: rgba(255, 255, 255, 0.82);
+            backdrop-filter: blur(25px) saturate(180%);
+            -webkit-backdrop-filter: blur(25px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+        }
+
+        .dark .ios-glass {
+            background: rgba(22, 28, 42, 0.75);
+            backdrop-filter: blur(25px) saturate(180%);
+            -webkit-backdrop-filter: blur(25px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        /* Segmented Control iOS Style */
+        .segmented-control {
+            background: rgba(220, 220, 228, 0.75);
+            backdrop-filter: blur(15px);
+            border-radius: 999px;
+            padding: 3px;
+        }
+
+        .dark .segmented-control {
+            background: rgba(30, 36, 52, 0.75);
+        }
+
+        /* Ultra Smooth Accordion Transition */
+        .accordion-wrapper {
+            display: grid;
+            grid-template-rows: 0fr;
+            transition: grid-template-rows 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .accordion-wrapper.open {
+            grid-template-rows: 1fr;
+        }
+
+        .accordion-inner {
+            overflow: hidden;
+        }
+
+        /* Dark Mode Uniform Item Colors - No Belang-Belang */
+        .schedule-item {
+            background-color: rgba(255, 255, 255, 0.88);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+        }
+
+        .dark .schedule-item {
+            background-color: rgba(255, 255, 255, 0.06) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        }
+
+        /* Custom Subtle Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(150, 150, 150, 0.25);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-ios-bgLight dark:bg-ios-bgDark text-slate-800 dark:text-slate-100 min-h-screen relative overflow-x-hidden transition-colors duration-400">
+
+    <!-- Canvas Animasi Background Pac-Man -->
+    <canvas id="pacmanCanvas" class="fixed top-0 left-0 w-full h-full pointer-events-none z-0 opacity-15 dark:opacity-20"></canvas>
+
+    <!-- Main Container -->
+    <div class="relative z-10 max-w-3xl mx-auto px-4 py-6 md:py-10 flex flex-col min-h-screen">
+
+        <!-- Top Navigation Bar & Theme Switcher -->
+        <div class="flex justify-between items-center mb-6">
+            <div class="flex items-center gap-2">
+                <span class="inline-block w-3 h-3 rounded-full bg-red-500/80 shadow-xs"></span>
+                <span class="inline-block w-3 h-3 rounded-full bg-amber-500/80 shadow-xs"></span>
+                <span class="inline-block w-3 h-3 rounded-full bg-emerald-500/80 shadow-xs"></span>
+            </div>
+
+            <!-- Dark / Light Toggle Switch -->
+            <button id="themeToggle" class="flex items-center gap-2 px-3.5 py-1.5 rounded-full ios-glass text-xs sm:text-sm font-semibold hover:bg-white/90 dark:hover:bg-slate-800/90 transition-all shadow-xs active:scale-95">
+                <i data-lucide="sun" class="w-4 h-4 text-amber-400 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-4 h-4 text-slate-700 block dark:hidden"></i>
+                <span id="themeText" class="font-medium">Dark Mode</span>
+            </button>
+        </div>
+
+        <!-- Greeting Header Section -->
+        <header class="text-center my-4 sm:my-6 px-2">
+            <h1 class="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50 flex items-center justify-center flex-wrap gap-2.5 leading-snug">
+                <span>Assalamualaikum pakcek, mau belajar dimana hari ini?</span>
+                <span class="inline-block animate-waving origin-bottom-right text-3xl sm:text-4xl md:text-5xl">👋</span>
+            </h1>
+            <p class="mt-2.5 text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium max-w-lg mx-auto">
+                Pilih lembaga di bawah untuk melihat rincian jadwal perkuliahan harian.
+            </p>
+        </header>
+
+        <!-- Segmented Navigation iOS Style Switcher -->
+        <div class="my-6 max-w-md mx-auto w-full">
+            <div class="segmented-control flex relative p-1 shadow-xs">
+                <!-- Sliding Background Indicator -->
+                <div id="segmentedBg" class="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white dark:bg-slate-800 rounded-full shadow-md transition-all duration-300 ease-out left-1"></div>
+
+                <button id="btnLipia" onclick="switchCampus('lipia')" class="relative z-10 w-1/2 py-2.5 text-xs sm:text-sm font-bold rounded-full transition-colors duration-300 text-slate-900 dark:text-white flex items-center justify-center gap-2">
+                    <i data-lucide="book-open" class="w-4 h-4"></i>
+                    <span>LIPIA Banda Aceh</span>
+                </button>
+                <button id="btnUim" onclick="switchCampus('uim')" class="relative z-10 w-1/2 py-2.5 text-xs sm:text-sm font-bold rounded-full transition-colors duration-300 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center gap-2">
+                    <i data-lucide="compass" class="w-4 h-4"></i>
+                    <span>Ma'had Online UIM</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT AREA -->
+        <main class="flex-grow my-2">
+
+            <!-- PAGE 1: LIPIA BANDA ACEH -->
+            <section id="pageLipia" class="space-y-5 transition-opacity duration-300">
+                <!-- Campus Banner Card -->
+                <div class="ios-glass p-5 sm:p-6 rounded-3xl shadow-lg border-l-4 border-lipia-gold flex flex-col sm:flex-row items-center gap-5 relative overflow-hidden">
+                    <div class="absolute -right-12 -bottom-12 w-44 h-44 bg-lipia-sky/15 rounded-full blur-3xl pointer-events-none"></div>
+                    
+                    <!-- Logo LIPIA -->
+                    <div class="w-20 h-24 sm:w-22 sm:h-26 flex-shrink-0 flex items-center justify-center bg-white/60 dark:bg-slate-900/60 p-2.5 rounded-2xl border border-lipia-sky/30 shadow-inner">
+                        <img src="image_787f3e.png" alt="Logo LIPIA Banda Aceh" class="max-h-full max-w-full object-contain drop-shadow-xs" onerror="this.onerror=null; this.src='https://upload.wikimedia.org/wikipedia/commons/8/87/Imam_Muhammad_ibn_Saud_Islamic_University_logo.png';">
+                    </div>
+
+                    <div class="text-center sm:text-left space-y-1">
+                        <div class="inline-block px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full bg-lipia-sky/20 text-blue-700 dark:text-lipia-skyLight border border-lipia-sky/30 mb-1">
+                            Ma'had Khadamul Haramain asy-Syarifain
+                        </div>
+                        <h2 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
+                            LIPIA Banda Aceh
+                        </h2>
+                        <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-medium">
+                            Jadwal Kuliah Mahasiswa • <span class="text-amber-700 dark:text-lipia-gold font-semibold">Semester Pertama 1448 H (Kelas 1/1)</span>
+                        </p>
+                        <div class="flex items-center justify-center sm:justify-start gap-4 text-xs text-slate-500 dark:text-slate-400 pt-1.5 font-medium">
+                            <span class="flex items-center gap-1.5"><i data-lucide="calendar" class="w-3.5 h-3.5 text-lipia-sky"></i> Senin - Jumat</span>
+                            <span class="flex items-center gap-1.5"><i data-lucide="clock" class="w-3.5 h-3.5 text-lipia-gold"></i> 08.00 - 11.45 WIB</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section List Day Accordion LIPIA -->
+                <div class="space-y-3" id="accordionLipia">
+                    <!-- Dynamic Accordion Insertion -->
+                </div>
+            </section>
+
+            <!-- PAGE 2: UIM MADINAH -->
+            <section id="pageUim" class="space-y-5 hidden opacity-0 transition-opacity duration-300">
+                <!-- Campus Banner Card -->
+                <div class="ios-glass p-5 sm:p-6 rounded-3xl shadow-lg border-l-4 border-uim-gold flex flex-col sm:flex-row items-center gap-5 relative overflow-hidden">
+                    <div class="absolute -right-12 -bottom-12 w-44 h-44 bg-uim-teal/15 rounded-full blur-3xl pointer-events-none"></div>
+
+                    <!-- Logo UIM -->
+                    <div class="w-20 h-24 sm:w-22 sm:h-26 flex-shrink-0 flex items-center justify-center bg-white/60 dark:bg-slate-900/60 p-2.5 rounded-2xl border border-uim-teal/30 shadow-inner">
+                        <img src="image_787fb6.png" alt="Logo UIM Madinah" class="max-h-full max-w-full object-contain drop-shadow-xs" onerror="this.onerror=null; this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Islamic_University_of_Madinah_logo.svg/1024px-Islamic_University_of_Madinah_logo.svg.png';">
+                    </div>
+
+                    <div class="text-center sm:text-left space-y-1">
+                        <div class="inline-block px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full bg-uim-teal/20 text-uim-teal dark:text-uim-tealLight border border-uim-teal/30 mb-1">
+                            Universitas Islam Madinah
+                        </div>
+                        <h2 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
+                            Ma'had Online UIM
+                        </h2>
+                        <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-medium">
+                            Jadwal Pelajaran • <span class="text-uim-gold font-semibold">Ma'had 302 (WIB)</span>
+                        </p>
+                        <div class="flex items-center justify-center sm:justify-start gap-4 text-xs text-slate-500 dark:text-slate-400 pt-1.5 font-medium">
+                            <span class="flex items-center gap-1.5"><i data-lucide="globe" class="w-3.5 h-3.5 text-uim-teal"></i> Minggu - Kamis</span>
+                            <span class="flex items-center gap-1.5"><i data-lucide="clock" class="w-3.5 h-3.5 text-uim-gold"></i> 05.00 - 10.00 WIB</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section List Day Accordion UIM -->
+                <div class="space-y-3" id="accordionUim">
+                    <!-- Dynamic Accordion Insertion -->
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Minimalist Footer -->
+        <footer class="mt-10 pt-4 border-t border-slate-200/80 dark:border-slate-800/60 text-center text-xs text-slate-400 dark:text-slate-500">
+            <p>© 1448 H / 2026 Jadwal Belajar LIPIA & UIM.</p>
+        </footer>
+
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // DATA JADWAL LIPIA BANDA ACEH
+        const lipiaData = [
+            {
+                day: "Senin",
+                items: [
+                    { jam: "Jam 1", time: "08.00 - 08.45", subject: "Membaca (Qira'ah)", lecturer: "Bidhawi Razi", icon: "book-open" },
+                    { jam: "Jam 2", time: "09.00 - 09.45", subject: "Membaca (Qira'ah)", lecturer: "Bidhawi Razi", icon: "book-open" },
+                    { jam: "Jam 3", time: "10.00 - 10.45", subject: "Latihan (Tadribat)", lecturer: "Badruddin", icon: "pen-tool" },
+                    { jam: "Jam 4", time: "11.00 - 11.45", subject: "Latihan (Tadribat)", lecturer: "Badruddin", icon: "pen-tool" },
+                ]
+            },
+            {
+                day: "Selasa",
+                items: [
+                    { jam: "Jam 1", time: "08.00 - 08.45", subject: "Fonetik/Fonologi (Aswat)", lecturer: "Kautsar Afdal", icon: "volume-2" },
+                    { jam: "Jam 2", time: "09.00 - 09.45", subject: "Al-Qur'an", lecturer: "Muhammad Muslim", icon: "bookmark" },
+                    { jam: "Jam 3", time: "10.00 - 10.45", subject: "Menulis (Kitabah)", lecturer: "Muharral 'Asri", icon: "edit-3" },
+                    { jam: "Jam 4", time: "11.00 - 11.45", subject: "Membaca (Qira'ah)", lecturer: "Bidhawi Razi", icon: "book-open" },
+                ]
+            },
+            {
+                day: "Rabu",
+                items: [
+                    { jam: "Jam 1", time: "08.00 - 08.45", subject: "Latihan (Tadribat)", lecturer: "Badruddin", icon: "pen-tool" },
+                    { jam: "Jam 2", time: "09.00 - 09.45", subject: "Al-Qur'an", lecturer: "Muhammad Muslim", icon: "bookmark" },
+                    { jam: "Jam 3", time: "10.00 - 10.45", subject: "Menulis (Kitabah)", lecturer: "Muharral 'Asri", icon: "edit-3" },
+                    { jam: "Jam 4", time: "11.00 - 11.45", subject: "Latihan (Tadribat)", lecturer: "Badruddin", icon: "pen-tool" },
+                ]
+            },
+            {
+                day: "Kamis",
+                items: [
+                    { jam: "Jam 1", time: "08.00 - 08.45", subject: "Ujian Tulis (Tahriri)", lecturer: "Syukran Abu Bakar", icon: "file-text", isExam: true },
+                    { jam: "Jam 2", time: "09.00 - 09.45", subject: "Fonetik/Fonologi (Aswat)", lecturer: "Kautsar Afdal", icon: "volume-2" },
+                    { jam: "Jam 3", time: "10.00 - 10.45", subject: "Ujian Lisan (Syafahi)", lecturer: "Syukran Abu Bakar", icon: "mic", isExam: true },
+                    { jam: "Jam 4", time: "11.00 - 11.45", subject: "Ujian Tulis (Tahriri)", lecturer: "Syukran Abu Bakar", icon: "file-text", isExam: true },
+                ]
+            },
+            {
+                day: "Jumat",
+                items: [
+                    { jam: "Jam 1", time: "08.00 - 08.45", subject: "Ujian Tulis (Tahriri)", lecturer: "Syukran Abu Bakar", icon: "file-text", isExam: true },
+                    { jam: "Jam 2", time: "09.00 - 09.45", subject: "Membaca (Qira'ah)", lecturer: "Bidhawi Razi", icon: "book-open" },
+                    { jam: "Jam 3", time: "10.00 - 10.45", subject: "Membaca (Qira'ah)", lecturer: "Bidhawi Razi", icon: "book-open" },
+                    { jam: "Jam 4", time: "11.00 - 11.45", subject: "Ujian Lisan (Syafahi)", lecturer: "Syukran Abu Bakar", icon: "mic", isExam: true },
+                ]
+            }
+        ];
+
+        // DATA JADWAL UIM MADINAH
+        const uimData = [
+            {
+                day: "Minggu",
+                items: [
+                    { jam: "Sesi 1", time: "05:00 WIB", subject: "Membaca (Qira'ah)", icon: "book-open" },
+                    { jam: "Sesi 2", time: "06:00 WIB", subject: "Menulis (Kitabah)", icon: "edit-3" },
+                    { jam: "Sesi 3", time: "07:00 WIB", subject: "Fonetik/Bunyi (Aswat)", icon: "volume-2" },
+                    { jam: "Sesi 4", time: "08:00 WIB", subject: "Membaca (Qira'ah)", icon: "book-open" },
+                    { jam: "Sesi 5", time: "09:00 WIB", subject: "Membaca (Qira'ah)", icon: "book-open" },
+                ]
+            },
+            {
+                day: "Senin",
+                items: [
+                    { jam: "Sesi 1", time: "06:00 WIB", subject: "Menyimak (Istima')", icon: "headphones" },
+                    { jam: "Sesi 2", time: "07:00 WIB", subject: "Berbicara (Tahadduts)", icon: "message-square" },
+                    { jam: "Sesi 3", time: "08:00 WIB", subject: "Menyimak (Istima')", icon: "headphones" },
+                    { jam: "Sesi 4", time: "09:00 WIB", subject: "Menulis (Kitabah)", icon: "edit-3" },
+                    { jam: "Sesi 5", time: "10:00 WIB", subject: "Berbicara (Tahadduts)", icon: "message-square" },
+                ]
+            },
+            {
+                day: "Selasa",
+                items: [
+                    { jam: "Sesi 1", time: "05:00 WIB", subject: "Menyimak (Istima')", icon: "headphones" },
+                    { jam: "Sesi 2", time: "06:00 WIB", subject: "Tata Bahasa/Struktur (Tarakib)", icon: "layers" },
+                    { jam: "Sesi 3", time: "07:00 WIB", subject: "Fonetik/Bunyi (Aswat)", icon: "volume-2" },
+                    { jam: "Sesi 4", time: "08:00 WIB", subject: "Tata Bahasa/Struktur (Tarakib)", icon: "layers" },
+                    { jam: "Sesi 5", time: "09:00 WIB", subject: "Tata Bahasa/Struktur (Tarakib)", icon: "layers" },
+                ]
+            },
+            {
+                day: "Rabu",
+                items: [
+                    { jam: "Sesi 1", time: "05:00 WIB", subject: "Menyimak (Istima')", icon: "headphones" },
+                    { jam: "Sesi 2", time: "06:00 WIB", subject: "Al-Qur'an", icon: "bookmark" },
+                    { jam: "Sesi 3", time: "07:00 WIB", subject: "Tata Bahasa/Struktur (Tarakib)", icon: "layers" },
+                    { jam: "Sesi 4", time: "08:00 WIB", subject: "Al-Qur'an", icon: "bookmark" },
+                    { jam: "Sesi 5", time: "09:00 WIB", subject: "Membaca (Qira'ah)", icon: "book-open" },
+                ]
+            },
+            {
+                day: "Kamis",
+                items: [
+                    { jam: "Sesi 1", time: "05:00 WIB", subject: "Tata Bahasa/Struktur (Tarakib)", icon: "layers" },
+                    { jam: "Sesi 2", time: "06:00 WIB", subject: "Tata Bahasa/Struktur (Tarakib)", icon: "layers" },
+                    { jam: "Sesi 3", time: "07:00 WIB", subject: "Menulis (Kitabah)", icon: "edit-3" },
+                    { jam: "Sesi 4", time: "08:00 WIB", subject: "Berbicara (Tahadduts)", icon: "message-square" },
+                    { jam: "Sesi 5", time: "09:00 WIB", subject: "Tata Bahasa/Struktur (Tarakib)", icon: "layers" },
+                ]
+            }
+        ];
+
+        // Accordion State tracking
+        let activeLipiaIndex = 0; // Default Senin
+        let activeUimIndex = 0;   // Default Minggu
+        let currentCampus = 'lipia';
+
+        // Render Accordion Function
+        function renderAccordion(campus) {
+            const isLipia = campus === 'lipia';
+            const data = isLipia ? lipiaData : uimData;
+            const activeIndex = isLipia ? activeLipiaIndex : activeUimIndex;
+            const containerId = isLipia ? 'accordionLipia' : 'accordionUim';
+            const container = document.getElementById(containerId);
+
+            const activeHeaderClass = isLipia 
+                ? 'bg-blue-500/10 dark:bg-sky-500/10 text-blue-900 dark:text-sky-300 border-b border-blue-200/50 dark:border-sky-500/20' 
+                : 'bg-uim-teal/10 dark:bg-uim-teal/15 text-teal-800 dark:text-uim-tealLight border-b border-uim-teal/20 dark:border-uim-teal/30';
+
+            let html = '';
+
+            data.forEach((dayGroup, index) => {
+                const isOpen = index === activeIndex;
+                const totalItems = dayGroup.items.length;
+
+                html += `
+                    <div class="ios-glass rounded-2xl overflow-hidden transition-all duration-300 shadow-xs border border-slate-200/80 dark:border-slate-800/80">
+                        <!-- Accordion Header Button -->
+                        <button onclick="toggleDay('${campus}', ${index})" 
+                                class="w-full px-5 py-4 flex items-center justify-between text-left transition-all duration-200 ${isOpen ? activeHeaderClass : 'hover:bg-slate-200/40 dark:hover:bg-slate-800/40'}">
+                            <div class="flex items-center gap-3.5">
+                                <div class="w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${isOpen ? (isLipia ? 'bg-blue-500 text-white shadow-xs' : 'bg-uim-teal text-white shadow-xs') : 'bg-slate-200/70 dark:bg-slate-800 text-slate-500 dark:text-slate-400'}">
+                                    <i data-lucide="calendar" class="w-4 h-4"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-base sm:text-lg text-slate-900 dark:text-white leading-tight">${dayGroup.day}</h3>
+                                    <span class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">${totalItems} Sesi Perkuliahan</span>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-2.5">
+                                <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-slate-200/60 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-300/40 dark:border-slate-700/40 hidden sm:inline-block">
+                                    ${totalItems} Sesi
+                                </span>
+                                <div class="w-7 h-7 rounded-full flex items-center justify-center transition-transform duration-300 ${isOpen ? 'rotate-180 bg-black/5 dark:bg-white/10' : ''}">
+                                    <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500 dark:text-slate-400"></i>
+                                </div>
+                            </div>
+                        </button>
+
+                        <!-- Accordion Wrapper (Smooth CSS Animation) -->
+                        <div class="accordion-wrapper ${isOpen ? 'open' : ''}">
+                            <div class="accordion-inner p-4 sm:p-5 space-y-2.5 bg-slate-50/50 dark:bg-slate-900/30">
+                                ${dayGroup.items.map((item) => {
+                                    const isExam = item.isExam;
+                                    const itemBg = isExam 
+                                        ? 'bg-amber-500/10 dark:bg-amber-500/15 border-amber-500/30' 
+                                        : 'schedule-item';
+                                    
+                                    const timeBadge = isLipia 
+                                        ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-sky-300 border border-blue-200/60 dark:border-blue-800/50' 
+                                        : 'bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-200/60 dark:border-teal-800/50';
+
+                                    return `
+                                        <div class="p-3.5 rounded-xl ${itemBg} flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                                            <div class="flex items-start sm:items-center gap-3">
+                                                <div class="p-2 rounded-lg ${isLipia ? 'bg-lipia-sky/20 text-blue-600 dark:text-sky-400' : 'bg-uim-gold/20 text-amber-600 dark:text-amber-400'} mt-0.5 sm:mt-0 flex-shrink-0">
+                                                    <i data-lucide="${item.icon || 'book'}" class="w-4 h-4"></i>
+                                                </div>
+                                                <div>
+                                                    <div class="flex items-center gap-2">
+                                                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400">${item.jam}:</span>
+                                                        <h4 class="font-bold text-sm sm:text-base text-slate-900 dark:text-slate-100 leading-snug">
+                                                            ${item.subject}
+                                                        </h4>
+                                                        ${isExam ? '<span class="px-2 py-0.5 text-[10px] font-extrabold uppercase bg-amber-500 text-white rounded-md shadow-2xs">Ujian</span>' : ''}
+                                                    </div>
+                                                    ${item.lecturer ? `
+                                                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1 font-medium">
+                                                            <i data-lucide="user" class="w-3 h-3 text-slate-400"></i> Pengajar: ${item.lecturer}
+                                                        </p>
+                                                    ` : ''}
+                                                </div>
+                                            </div>
+
+                                            <div class="self-end sm:self-center flex-shrink-0">
+                                                <span class="px-3 py-1 text-xs font-mono font-bold rounded-lg ${timeBadge} flex items-center gap-1.5">
+                                                    <i data-lucide="clock" class="w-3 h-3"></i>
+                                                    ${item.time}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+            lucide.createIcons();
+        }
+
+        // Accordion Toggle function (Single Open Accordion Pattern)
+        function toggleDay(campus, index) {
+            if (campus === 'lipia') {
+                activeLipiaIndex = (activeLipiaIndex === index) ? -1 : index;
+                renderAccordion('lipia');
+            } else {
+                activeUimIndex = (activeUimIndex === index) ? -1 : index;
+                renderAccordion('uim');
+            }
+        }
+
+        // Switch Campus Tab
+        function switchCampus(campus) {
+            currentCampus = campus;
+            const btnLipia = document.getElementById('btnLipia');
+            const btnUim = document.getElementById('btnUim');
+            const pageLipia = document.getElementById('pageLipia');
+            const pageUim = document.getElementById('pageUim');
+            const segmentedBg = document.getElementById('segmentedBg');
+
+            if (campus === 'lipia') {
+                segmentedBg.style.left = '4px';
+                btnLipia.className = "relative z-10 w-1/2 py-2.5 text-xs sm:text-sm font-bold rounded-full transition-colors duration-300 text-slate-900 dark:text-white flex items-center justify-center gap-2";
+                btnUim.className = "relative z-10 w-1/2 py-2.5 text-xs sm:text-sm font-bold rounded-full transition-colors duration-300 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center gap-2";
+
+                pageUim.classList.add('opacity-0');
+                setTimeout(() => {
+                    pageUim.classList.add('hidden');
+                    pageLipia.classList.remove('hidden');
+                    setTimeout(() => pageLipia.classList.remove('opacity-0'), 20);
+                }, 200);
+            } else {
+                segmentedBg.style.left = 'calc(50%)';
+                btnUim.className = "relative z-10 w-1/2 py-2.5 text-xs sm:text-sm font-bold rounded-full transition-colors duration-300 text-slate-900 dark:text-white flex items-center justify-center gap-2";
+                btnLipia.className = "relative z-10 w-1/2 py-2.5 text-xs sm:text-sm font-bold rounded-full transition-colors duration-300 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center gap-2";
+
+                pageLipia.classList.add('opacity-0');
+                setTimeout(() => {
+                    pageLipia.classList.add('hidden');
+                    pageUim.classList.remove('hidden');
+                    setTimeout(() => pageUim.classList.remove('opacity-0'), 20);
+                }, 200);
+            }
+        }
+
+        // Dark / Light Mode Toggle
+        const themeToggleBtn = document.getElementById('themeToggle');
+        const themeText = document.getElementById('themeText');
+
+        themeToggleBtn.addEventListener('click', () => {
+            const html = document.documentElement;
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                themeText.textContent = 'Light Mode';
+            } else {
+                html.classList.add('dark');
+                themeText.textContent = 'Dark Mode';
+            }
+        });
+
+        // -------------------------------------------------------------
+        // ANIMATED PAC-MAN BACKGROUND CANVAS LOGIC
+        // -------------------------------------------------------------
+        const canvas = document.getElementById('pacmanCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let width, height;
+        function resizeCanvas() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class PacmanCharacter {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.y = Math.random() * (height - 120) + 60;
+                this.x = -60;
+                this.speed = 1.4 + Math.random() * 0.8;
+                this.radius = 16;
+                this.mouthAngle = 0.2;
+                this.mouthSpeed = 0.025;
+                
+                // Ghost Squad
+                this.ghosts = [
+                    { x: this.x - 45, color: '#ef4444' }, // Red (Blinky)
+                    { x: this.x - 80, color: '#ec4899' }, // Pink (Pinky)
+                    { x: this.x - 115, color: '#06b6d4' } // Cyan (Inky)
+                ];
+
+                // Dots line
+                this.dots = [];
+                for (let dx = 35; dx < width + 200; dx += 32) {
+                    this.dots.push({ x: dx, eaten: false });
+                }
+            }
+
+            update() {
+                this.x += this.speed;
+                this.ghosts.forEach(g => g.x += this.speed);
+
+                // Mouth opening/closing
+                this.mouthAngle += this.mouthSpeed;
+                if (this.mouthAngle > 0.38 || this.mouthAngle < 0.03) {
+                    this.mouthSpeed = -this.mouthSpeed;
+                }
+
+                // Eat dots
+                this.dots.forEach(dot => {
+                    if (!dot.eaten && this.x >= dot.x) {
+                        dot.eaten = true;
+                    }
+                });
+
+                // Reset loop
+                if (this.x - 150 > width) {
+                    this.reset();
+                }
+            }
+
+            draw() {
+                const isDark = document.documentElement.classList.contains('dark');
+                const pacmanColor = isDark ? '#fbbf24' : '#d97706';
+                const dotColor = isDark ? '#64748b' : '#94a3b8';
+
+                // Draw Dots
+                this.dots.forEach(dot => {
+                    if (!dot.eaten && dot.x < width) {
+                        ctx.beginPath();
+                        ctx.arc(dot.x, this.y, 3, 0, Math.PI * 2);
+                        ctx.fillStyle = dotColor;
+                        ctx.fill();
+                        ctx.closePath();
+                    }
+                });
+
+                // Draw Pac-Man
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, this.mouthAngle * Math.PI, (2 - this.mouthAngle) * Math.PI);
+                ctx.lineTo(this.x, this.y);
+                ctx.fillStyle = pacmanColor;
+                ctx.fill();
+                ctx.closePath();
+
+                // Draw Eye
+                ctx.beginPath();
+                ctx.arc(this.x + 2, this.y - 8, 2, 0, Math.PI * 2);
+                ctx.fillStyle = '#000000';
+                ctx.fill();
+                ctx.closePath();
+
+                // Draw Ghosts
+                this.ghosts.forEach(ghost => {
+                    if (ghost.x > -30 && ghost.x < width + 30) {
+                        this.drawGhost(ghost.x, this.y, ghost.color);
+                    }
+                });
+            }
+
+            drawGhost(x, y, color) {
+                const r = 14;
+                ctx.beginPath();
+                ctx.arc(x, y - 2, r, Math.PI, 0, false);
+                ctx.lineTo(x + r, y + r);
+                ctx.lineTo(x + r * 0.5, y + r - 3);
+                ctx.lineTo(x, y + r);
+                ctx.lineTo(x - r * 0.5, y + r - 3);
+                ctx.lineTo(x - r, y + r);
+                ctx.closePath();
+                
+                ctx.fillStyle = color;
+                ctx.fill();
+
+                // Eyes
+                ctx.beginPath();
+                ctx.arc(x - 4, y - 3, 3.5, 0, Math.PI * 2);
+                ctx.arc(x + 4, y - 3, 3.5, 0, Math.PI * 2);
+                ctx.fillStyle = '#ffffff';
+                ctx.fill();
+
+                // Pupils
+                ctx.beginPath();
+                ctx.arc(x - 2, y - 3, 1.8, 0, Math.PI * 2);
+                ctx.arc(x + 6, y - 3, 1.8, 0, Math.PI * 2);
+                ctx.fillStyle = '#1e293b';
+                ctx.fill();
+            }
+        }
+
+        const pacmanSim = new PacmanCharacter();
+
+        function animateCanvas() {
+            ctx.clearRect(0, 0, width, height);
+            pacmanSim.update();
+            pacmanSim.draw();
+            requestAnimationFrame(animateCanvas);
+        }
+
+        // INITIALIZATION
+        window.onload = () => {
+            renderAccordion('lipia');
+            renderAccordion('uim');
+            lucide.createIcons();
+            animateCanvas();
+        };
+    </script>
+</body>
+</html>
